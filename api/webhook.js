@@ -1,5 +1,5 @@
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`;
-const GEMINI_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+const GEMINI_API = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
 // In-memory storage for audio (Vercel serverless - resets between calls)
 // For production, use Vercel KV or similar
@@ -66,8 +66,8 @@ async function handleVoiceMessage(message) {
 
     // Send both results
     const response = `📝 *Транскрипция:*\n${escapeMarkdown(transcription)}\n\n` +
-                     `━━━━━━━━━━━━━━━\n\n` +
-                     `📋 *Заметка:*\n${escapeMarkdown(note)}`;
+      `━━━━━━━━━━━━━━━\n\n` +
+      `📋 *Заметка:*\n${escapeMarkdown(note)}`;
 
     await sendMessage(chatId, response, { parse_mode: 'Markdown' });
 
@@ -99,7 +99,7 @@ async function getTranscription(base64Audio) {
   });
 
   const data = await response.json();
-  
+
   if (data.error) {
     throw new Error(data.error.message);
   }
