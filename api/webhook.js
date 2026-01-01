@@ -114,18 +114,19 @@ async function formatAsNote(transcription) {
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `Transform this voice transcription into a clean, well-structured note.
+          text: `Преобразуй эту транскрипцию голосового сообщения в компактную заметку.
 
-Rules:
-- Remove filler words (um, uh, like, you know, ну, типа, как бы, вот)
-- Fix grammar and punctuation
-- Split into logical paragraphs
-- Keep the original meaning and tone
-- If there are action items or tasks, list them at the end
-- Respond in the same language as the input
-- Output only the formatted note, no explanations
+Правила:
+- Убери слова-паразиты (э, ну, типа, как бы, вот, значит, короче)
+- Сократи текст до сути, убери повторы и воду
+- Раздели на 2-4 короткие строки по смыслу
+- Каждая строка — одна законченная мысль
+- Не используй буллеты, заголовки или форматирование
+- Сохрани живой, естественный тон
+- Отвечай на том же языке, что и входной текст
+- Выведи только заметку, без пояснений
 
-Transcription:
+Транскрипция:
 ${transcription}`
         }]
       }]
@@ -190,5 +191,5 @@ async function answerCallback(callbackId, text = '') {
 }
 
 function escapeMarkdown(text) {
-  return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+  return text.replace(/([_*\[\]()~`>#+\-=|{}!])/g, '\\$1');
 }
