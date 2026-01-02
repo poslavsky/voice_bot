@@ -12,10 +12,28 @@ export default async function handler(req, res) {
 
   try {
     const update = req.body;
+    const message = update.message;
 
-    // Handle voice message
-    if (update.message?.voice) {
-      await handleVoiceMessage(update.message);
+    if (message) {
+      // Check for voice in different places:
+      // 1. Direct voice message
+      // 2. Forwarded voice message (same structure, just has forward_from)
+      // 3. Reply to a voice message (voice is in reply_to_message)
+
+      let voiceMessage = null;
+
+      if (message.voice) {
+        // Direct or forwarded voice message
+        voiceMessage = message;
+      } else if (message.reply_to_message?.voice) {
+        // Reply to a voice message - process the replied message
+        voiceMessage = message.reply_to_message;
+        voiceMessage.chat = message.chat; // Keep the current chat for response
+      }
+
+      if (voiceMessage) {
+        await handleVoiceMessage(voiceMessage);
+      }
     }
 
     // Handle callback (button press)
