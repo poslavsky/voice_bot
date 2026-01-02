@@ -82,16 +82,25 @@ async function handleVoiceMessage(message) {
     // Delete processing message
     await deleteMessage(chatId, processingMsg.result.message_id);
 
-    // Send both results
-    const response = `📝 <b>Транскрипция:</b>\n${transcription}\n\n` +
-      `━━━━━━━━━━━━━━━\n\n` +
-      `📋 <b>Заметка:</b>\n${note}`;
+    // Send results (split if too long for Telegram's 4096 char limit)
+    const transcriptionMsg = `📝 <b>Транскрипция:</b>\n${transcription}`;
+    const noteMsg = `📋 <b>Заметка:</b>\n${note}`;
 
-    await sendMessage(chatId, response, { parse_mode: 'HTML' });
+    // Send transcription (split if needed)
+    await sendLongMessage(chatId, transcriptionMsg);
+
+    // Send separator and note
+    await sendMessage(chatId, '━━━━━━━━━━━━━━━');
+    await sendLongMessage(chatId, noteMsg);
 
   } catch (error) {
     console.error('Voice processing error:', error);
-    await editMessage(chatId, processingMsg.result.message_id, '❌ Ошибка обработки: ' + error.message);
+    // Try to send error message as new message if processingMsg was deleted
+    try {
+      await editMessage(chatId, processingMsg.result.message_id, '❌ Ошибка обработки: ' + error.message);
+    } catch {
+      await sendMessage(chatId, '❌ Ошибка обработки: ' + error.message);
+    }
   }
 }
 
@@ -197,6 +206,35 @@ async function sendMessage(chatId, text, options = {}) {
     })
   });
   return response.json();
+}
+
+// Send long messages by splitting into chunks
+async function sendLongMessage(chatId, text, options = { parse_mode: 'HTML' }) {
+  const MAX_LENGTH = 4000; // Leave some margin from 4096
+
+  if (text.length <= MAX_LENGTH) {
+    return sendMessage(chatId, text, options);
+  }
+
+  // Split by paragraphs first, then by sentences if needed
+  const chunks = [];
+  let currentChunk = '';
+  const paragraphs = text.split('\n\n');
+
+  for (const para of paragraphs) {
+    if ((currentChunk + '\n\n' + para).length > MAX_LENGTH) {
+      if (currentChunk) chunks.push(currentChunk);
+      currentChunk = para;
+    } else {
+      currentChunk = currentChunk ? currentChunk + '\n\n' + para : para;
+    }
+  }
+  if (currentChunk) chunks.push(currentChunk);
+
+  // Send all chunks
+  for (const chunk of chunks) {
+    await sendMessage(chatId, chunk, options);
+  }
 }
 
 async function editMessage(chatId, messageId, text) {
